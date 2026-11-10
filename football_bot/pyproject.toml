@@ -1,0 +1,11 @@
+[project]
+name = "football-demo-bot"
+version = "0.1.0"
+description = "Persian football betting Telegram bot - DEMO MODE ONLY"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
