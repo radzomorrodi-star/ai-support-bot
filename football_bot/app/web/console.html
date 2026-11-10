@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin console (DEMO)</title>
+<style>
+body{font:14px system-ui,sans-serif;margin:0;background:#f4f5f7;color:#1c1e21}
+header{background:#1f2937;color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center}
+.demo{background:#b45309;padding:2px 8px;border-radius:4px;font-size:12px}
+nav button{margin:4px;padding:6px 10px;border:0;border-radius:4px;cursor:pointer}
+main{padding:16px}pre{background:#fff;padding:12px;border-radius:6px;overflow:auto;max-height:70vh}
+input{padding:6px;margin:4px}#login,#app{display:none}
+</style></head><body>
+<header><b>Football bot admin</b><span class="demo">DEMO MODE - no real money</span><span id="who"></span></header>
+<main>
+<form id="login" style="display:block"><input id="tid" placeholder="Telegram ID" inputmode="numeric" autocomplete="username">
+<input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+<input id="otp" placeholder="2FA code" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+<button>Sign in</button> <span id="err" style="color:#b91c1c"></span></form>
+<div id="app"><nav id="nav"></nav>
+<div id="q"><input id="cust" placeholder="Customer Telegram ID"><button id="go">Search</button></div><pre id="out"></pre></div>
+</main>
+<script>
+let token=null;const $=id=>document.getElementById(id);
+const views={Fixtures:"/fixtures","Odds health":"/odds/health",Suspended:"/markets/suspended",Claims:"/claims",
+Complaints:"/complaints","Security alerts":"/security/alerts",Audit:"/audit","Audit verify":"/audit/verify",Config:"/config"};
+async function api(path,opt={}){const r=await fetch("/admin/api"+path,{...opt,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})}});
+ const t=await r.text();let j;try{j=JSON.parse(t)}catch{j=t}if(!r.ok)throw new Error(r.status+" "+(j.detail||t));return j}
+$("login").onsubmit=async e=>{e.preventDefault();$("err").textContent="";
+ try{const j=await api("/login",{method:"POST",body:JSON.stringify({telegram_id:+$("tid").value,password:$("pw").value,totp:$("otp").value})});
+ token=j.token;$("pw").value="";$("otp").value="";$("login").style.display="none";$("app").style.display="block";$("who").textContent="ID "+$("tid").value}
+ catch(x){$("err").textContent=x.message}};
+for(const[k,p]of Object.entries(views)){const b=document.createElement("button");b.textContent=k;
+ b.onclick=async()=>{try{$("out").textContent=JSON.stringify(await api(p),null,2)}catch(x){$("out").textContent=x.message}};$("nav").appendChild(b)}
+$("go").onclick=async()=>{const id=encodeURIComponent($("cust").value.trim());
+ try{$("out").textContent=JSON.stringify({customer:await api("/customers/"+id),bets:await api("/customers/"+id+"/bets"),wallet:await api("/wallets/"+id)},null,2)}
+ catch(x){$("out").textContent=x.message}};
+</script></body></html>
